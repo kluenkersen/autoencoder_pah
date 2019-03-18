@@ -6,7 +6,7 @@ class CSVLoader(object):
         loads csv file and gives you timeframe back
     '''
     def __init__(self, data_path, timeframe=5):
-        self.data = pd.read_csv(data_path, header=None)
+        self.data = pd.read_csv(data_path)
         self.timeframe = timeframe
     
     def __len__(self):
