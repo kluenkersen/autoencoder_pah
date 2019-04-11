@@ -1,60 +1,8 @@
 import pandas as pd
 import numpy as np
-import xgboost as xgb
 from sklearn.datasets import load_boston
 from sklearn.metrics import confusion_matrix
 
-def xgEvaluation(X, y, y_field='4', i_end=50, debug_i=5, threshold_confusionm=0.5):
-    # define split range by %
-    split = int(X.shape[0]/100*30)
-    split = split
-    # split train test
-    X_train = pd.DataFrame(X[0])[split:].reset_index(drop=True)
-    y_train = y[split:].reset_index(drop=True)[y_field]
-    X_test = pd.DataFrame((X[0])[:split]).reset_index(drop=True)
-    y_test = y[:split].reset_index(drop=True)[y_field]
-    y_train = pd.DataFrame(y_train).replace(to_replace=[2], value=1)
-    y_test = pd.DataFrame(y_test).replace(to_replace=[2], value=1)
-
-    y_train_ = pd.DataFrame()
-    y_train_ = pd.DataFrame()
-    X_train_df = pd.DataFrame()
-    X_test_df = pd.DataFrame()
-    y_columns = y.columns
-    for i in range(i_end):
-        pct_change = i * 5    
-        if(pct_change == 0):
-            pct_change = 1
-        X_train_ = X_train.pct_change(periods=pct_change)
-        X_test_ = X_test.pct_change(periods=pct_change)
-        # get again right format for xgboost
-        X_test_.replace([np.inf, -np.inf], np.nan, inplace=True)
-        X_train_.fillna(0, inplace=True)
-        X_test_.fillna(0, inplace=True)
-        X_train_ = pd.DataFrame(X_train_, dtype='float32')
-        X_test_ = pd.DataFrame(X_test_, dtype='float32')
-        # initialise randomforest
-        X_train_df[str(pct_change)] = X_train_.values.reshape(-1,)
-        X_test_df[str(pct_change)] = X_test_.values.reshape(-1,)
-        # run over each column
-        # fill first y values with 0 because pct_change is not able to do it
-        # can only be done if i is not 0
-        y_train_ = y_train.values
-        y_test_ = y_test.values
-        if(i > 0):
-            y_train_ = np.insert(y_train_, 0, ([0 for p in range(i)]))[:-i]
-            y_test_ = np.insert(y_test_, 0, ([0 for p in range(i)]))[:-i]
-
-        if(i_end == (i+1) or (i % debug_i) == 0):
-            # # XGBoost API example
-            params = {'tree_method': 'gpu_hist', 'n_estimators': 100, 'objective':'binary:logistic'}
-            dtrain = xgb.DMatrix(X_train_df.values, y_train_)
-            dtest = xgb.DMatrix(X_test_df.values)
-            model = xgb.train(params, dtrain, evals=[(dtrain, 'train')], verbose_eval=False)
-            pred = model.predict(dtest)
-            conf = confusion_matrix(y_test_, (pred>threshold_confusionm))
-            print("treshhold: " + str(threshold_confusionm) + ' i: ' + str(i))
-            print(conf)
 
 def create_X_y(filename, path='data', timeframe=30, boarder=0.2, loss_ratio=3):
     """[This can take a while :-), we are looping over the hole csv file to create new files.
